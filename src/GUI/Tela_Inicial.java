@@ -1,4 +1,4 @@
-/*
+       /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
@@ -16,6 +16,7 @@ public class Tela_Inicial {
     JButton btnSair = new JButton("Sair");
     JPanel panel = new JPanel();
     JLabel logo = new JLabel(new ImageIcon(getClass().getResource("/Image/academi.png")));
+    JLabel wallpaper = new JLabel(new ImageIcon(getClass().getResource("/Image/sla1.jpg")));
 
     public Tela_Inicial() {
         window.setSize(690, 600);
@@ -23,10 +24,13 @@ public class Tela_Inicial {
         window.setLayout(null);
         window.setLocationRelativeTo(null);
 
+        wallpaper.setBounds(0, 0, 738, 854);
+        wallpaper.setVisible(true);
+
         panel.setLayout(null);
         panel.setVisible(true);
         panel.setBounds(400, 0, 278, 600);
-        panel.setBackground(new Color(255, 255, 255, 255)); 
+        panel.setBackground(new Color(255, 255, 255, 255));
         window.add(panel);
 
         titulo.setBounds(15, 100, 250, 40);
@@ -38,10 +42,6 @@ public class Tela_Inicial {
         btnAlunos.setBackground(new Color(0, 153, 255));
         btnAlunos.setForeground(Color.WHITE);
         btnAlunos.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
-        btnAlunos.addActionListener(e -> {
-            new Tela_alunos();
-            window.dispose();
-        });
         panel.add(btnAlunos);
 
         btnProfessores.setBounds(40, 240, 200, 40);
@@ -67,10 +67,9 @@ public class Tela_Inicial {
         logo.setBounds(-30, -100, 500, 800);
         window.add(logo);
 
+        window.add(wallpaper);
         window.setVisible(true);
     }
 
-    public static void main(String[] args) {
-        new Tela_Inicial();
-    }
+   
 }

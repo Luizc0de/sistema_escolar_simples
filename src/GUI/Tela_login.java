@@ -4,7 +4,12 @@ package GUI;
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
  */
+import factory.ConnectionFactory;
 import java.awt.Color;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.*;
 /**
  *
@@ -83,15 +88,31 @@ public class Tela_login {
        
     }
     private void autenticar() {
-        String usuario = userText.getText();
-        String senha = new String(passwordText.getPassword());
-        if (usuario.equals("admin") && senha.equals("1234")) {
-            window.dispose();
-            new Tela_Inicial();
-        } else {
-            JOptionPane.showMessageDialog(window, "Usuário ou senha incorretos.");
+        String nome = userText.getText();
+        String senha = String.valueOf(passwordText.getPassword());
+        String sql = "select * from autentica where nome=? and senha=?";
+        try (Connection con = new ConnectionFactory().getConnection();
+            PreparedStatement stm = con.prepareStatement(sql)) {
+            stm.setString(1, nome);
+            stm.setString(2, senha);
+            try (ResultSet rs = stm.executeQuery()) {
+                if (rs.next()) {
+                    JOptionPane.showMessageDialog(null, "Logado com sucesso!");
+                    // Open a simple user window (UsuarioGUI was not found)
+                    new Tela_Inicial();
+                    window.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Usuário ou senha incorretos!!");
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Erro ao se comunicar com o banco de dados: " + e.getMessage());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro inesperado: " + e.getMessage());
         }
     }
+        
+
     public static void main(String[] args) {
         new Tela_login();
     }
