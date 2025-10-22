@@ -1,4 +1,4 @@
-       /*
+/*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
@@ -10,9 +10,10 @@ import javax.swing.*;
 public class Tela_Inicial {
     JFrame window = new JFrame("Administração da Escola");
     JLabel titulo = new JLabel("Painel Administrativo");
-    JButton btnAlunos = new JButton("Gerenciar Alunos");
-    JButton btnProfessores = new JButton("Gerenciar Professores");
-    JButton btnTurmas = new JButton("Gerenciar Turmas");
+    JButton btnAlunos = new JButton("Gerenciar Alunos",new ImageIcon(getClass().getResource("/Image/aluna24.png")));
+    JButton btnProfessores = new JButton("Gerenciar Professores",new ImageIcon(getClass().getResource("/Image/apresentacao24.png")));
+    JButton btnTurmas = new JButton("Gerenciar Turmas",new ImageIcon(getClass().getResource("/Image/turma24.png")));
+    JButton btnDisciplinas = new JButton("Gerenciar Disciplinas",new ImageIcon(getClass().getResource("/Image/bloc.png")));
     JButton btnSair = new JButton("Sair");
     JPanel panel = new JPanel();
     JLabel logo = new JLabel(new ImageIcon(getClass().getResource("/Image/academi.png")));
@@ -56,13 +57,41 @@ public class Tela_Inicial {
         btnTurmas.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         panel.add(btnTurmas);
 
-        btnSair.setBounds(40, 400, 200, 40);
+        // novo botão de Disciplinas
+        btnDisciplinas.setBounds(40, 360, 200, 40);
+        btnDisciplinas.setBackground(new Color(0, 153, 255));
+        btnDisciplinas.setForeground(Color.WHITE);
+        btnDisciplinas.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
+        panel.add(btnDisciplinas);
+
+        btnSair.setBounds(40, 440, 200, 40);
         btnSair.setBackground(new Color(220, 53, 69));
         btnSair.setForeground(Color.WHITE);
         btnSair.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         panel.add(btnSair);
 
         btnSair.addActionListener(e -> window.dispose());
+
+        // ações para abrir as telas correspondentes
+        btnAlunos.addActionListener(e -> {
+            new Tela_alunos();
+            window.dispose();
+        });
+
+        btnProfessores.addActionListener(e -> {
+            new Tela_Professor();
+            window.dispose();
+        });
+
+        btnTurmas.addActionListener(e -> {
+            new Tela_Turma();
+            window.dispose();
+        });
+
+        btnDisciplinas.addActionListener(e -> {
+            new Tela_Disciplina();
+            window.dispose();
+        });
 
         logo.setBounds(-30, -100, 500, 800);
         window.add(logo);

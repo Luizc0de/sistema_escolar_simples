@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class Tela_alunos {
     JFrame window = new JFrame("Cadastro de Alunos");
@@ -17,20 +18,21 @@ public class Tela_alunos {
     JTextField telefoneField = new JTextField();
     JButton cadastrarBtn = new JButton("Cadastrar");
     JTextField buscarField = new JTextField();
-    JButton buscarBtn = new JButton("Buscar");
+    JButton buscarBtn = new JButton("Buscar", new ImageIcon(getClass().getResource("/Image/lupa24.png")));
     JLabel logo = new JLabel(new ImageIcon(getClass().getResource("/Image/academi.png")));
 
-    // Lista visual de resultados
-    DefaultListModel<Usuario> listModel = new DefaultListModel<>();
-    JList<Usuario> resultadoList = new JList<>(listModel);
+    // tabela para resultados
+    DefaultTableModel tableModel;
+    JTable tabela;
     JButton deletarBtn = new JButton("Deletar selecionado");
     JButton editarBtn = new JButton("Editar selecionado");
+    JButton voltarBtn = new JButton("Voltar");
 
     UsuarioDAO usuarioDAO = new UsuarioDAO();
 
-    // controle de edição
+    // edição
     private Long editingId = null;
-    private int editingIndex = -1;
+    private int editingRow = -1;
 
     public Tela_alunos() {
         window.setSize(690, 620);
@@ -39,13 +41,13 @@ public class Tela_alunos {
         window.setLocationRelativeTo(null);
 
         // Logo no topo (centralizado)
-        logo.setBounds(195, 10, 300, 120); // centraliza aproximadamente (690 largura)
+        logo.setBounds(195, 10, 300, 120);
         logo.setHorizontalAlignment(SwingConstants.CENTER);
         window.add(logo);
 
-        // Painel central com funcionalidades (formulário e botões)
+        // Painel central com formulário
         centerPanel.setLayout(null);
-        centerPanel.setBounds(95, 140, 500, 250); // centralizado horizontalmente
+        centerPanel.setBounds(95, 140, 500, 250);
         centerPanel.setBackground(new Color(255, 255, 255, 255));
         centerPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         window.add(centerPanel);
@@ -85,60 +87,33 @@ public class Tela_alunos {
         cadastrarBtn.setFont(new Font("Arial", Font.BOLD, 16));
         centerPanel.add(cadastrarBtn);
 
-        // Área de busca no próprio painel central (campo e botão)
+        // Busca
         JLabel buscarLabel = new JLabel("Buscar por nome:");
         buscarLabel.setBounds(20, 195, 120, 25);
         centerPanel.add(buscarLabel);
         buscarField.setBounds(140, 195, 230, 25);
         centerPanel.add(buscarField);
 
-        buscarBtn.setBounds(380, 190, 100, 30);
+        buscarBtn.setBounds(380, 190, 110, 30);
         buscarBtn.setBackground(new Color(0, 153, 255));
         buscarBtn.setForeground(Color.WHITE);
-        buscarBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        buscarBtn.setFont(new Font("Arial", Font.BOLD, 13));
         centerPanel.add(buscarBtn);
 
-        // Renderer mostra ID, Nome, CPF, Telefone e Email (HTML)
-        resultadoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        resultadoList.setCellRenderer(new DefaultListCellRenderer() {
+        // Tabela de resultados (abaixo do painel)
+        String[] colunas = {"ID", "Nome", "CPF", "Telefone", "Email"};
+        tableModel = new DefaultTableModel(colunas, 0) {
             @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                Usuario u = (Usuario) value;
-                String text = "<html>"
-                        + "<b>ID:</b> " + (u.getId() == null ? "-" : u.getId()) + " &nbsp;&nbsp; <b>Nome:</b> " + esc(u.getNome())
-                        + "<br><b>CPF:</b> " + esc(u.getCpf()) + " &nbsp;&nbsp; <b>Telefone:</b> " + esc(u.getTelefone())
-                        + "<br><b>Email:</b> " + esc(u.getEmail())
-                        + "</html>";
-                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
-                lbl.setVerticalAlignment(SwingConstants.TOP);
-                return lbl;
-            }
-        });
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        tabela = new JTable(tableModel);
+        tabela.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scroll = new JScrollPane(tabela);
+        scroll.setBounds(95, 420, 500, 120);
+        scroll.setBorder(BorderFactory.createTitledBorder("Resultados da busca"));
+        window.add(scroll);
 
-        // Duplo clique abre detalhes em dialog
-        resultadoList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    Usuario u = resultadoList.getSelectedValue();
-                    if (u != null) {
-                        String msg = "ID: " + (u.getId() == null ? "-" : u.getId())
-                                + "\nNome: " + nullToEmpty(u.getNome())
-                                + "\nCPF: " + nullToEmpty(u.getCpf())
-                                + "\nTelefone: " + nullToEmpty(u.getTelefone())
-                                + "\nEmail: " + nullToEmpty(u.getEmail());
-                        JOptionPane.showMessageDialog(window, msg, "Detalhes do aluno", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                }
-            }
-        });
-
-        JScrollPane resultadoScroll = new JScrollPane(resultadoList);
-        resultadoScroll.setBounds(95, 420, 500, 120);
-        resultadoScroll.setBorder(BorderFactory.createTitledBorder("Resultados da busca (duplo-clique para detalhes)"));
-        window.add(resultadoScroll);
-
-        // botões editar e deletar
+        // botões editar/deletar/voltar
         editarBtn.setBounds(240, 545, 170, 28);
         editarBtn.setBackground(new Color(255, 193, 7));
         editarBtn.setForeground(Color.BLACK);
@@ -151,7 +126,13 @@ public class Tela_alunos {
         deletarBtn.setFont(new Font("Arial", Font.BOLD, 12));
         window.add(deletarBtn);
 
-        // Ação de cadastro / salvar (adicionar ou atualizar)
+        voltarBtn.setBounds(95, 545, 120, 28);
+        voltarBtn.setBackground(new Color(108,117,125));
+        voltarBtn.setForeground(Color.WHITE);
+        voltarBtn.setFont(new Font("Arial", Font.BOLD, 12));
+        window.add(voltarBtn);
+
+        // Ação cadastrar / salvar
         cadastrarBtn.addActionListener(e -> {
             String nome = nomeField.getText().trim();
             if (nome.isEmpty()) {
@@ -160,21 +141,21 @@ public class Tela_alunos {
             }
 
             if (editingId == null) {
-                // criar novo
                 Usuario aluno = new Usuario();
                 aluno.setNome(nome);
                 aluno.setCpf(cpfField.getText().trim());
                 aluno.setEmail(emailField.getText().trim());
                 aluno.setTelefone(telefoneField.getText().trim());
                 try {
-                    usuarioDAO.adiciona(aluno); // grava no banco e popula id no objeto
+                    usuarioDAO.adiciona(aluno);
+                    // acrescenta na tabela
+                    tableModel.addRow(new Object[]{aluno.getId(), aluno.getNome(), aluno.getCpf(), aluno.getTelefone(), aluno.getEmail()});
                     JOptionPane.showMessageDialog(window, "Aluno cadastrado com sucesso!");
                     clearForm();
                 } catch (RuntimeException ex) {
                     JOptionPane.showMessageDialog(window, "Erro ao cadastrar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                // atualizar existente
                 Usuario aluno = new Usuario();
                 aluno.setId(editingId);
                 aluno.setNome(nome);
@@ -183,13 +164,13 @@ public class Tela_alunos {
                 aluno.setTelefone(telefoneField.getText().trim());
                 try {
                     boolean ok = usuarioDAO.atualizar(aluno);
-                    if (ok) {
-                        // atualizar item na lista visual se estiver presente
-                        if (editingIndex >= 0 && editingIndex < listModel.size()) {
-                            listModel.set(editingIndex, aluno);
-                        } else {
-                            // se não estiver na lista, apenas recarrega busca
-                        }
+                    if (ok && editingRow >= 0) {
+                        // atualiza a linha na tabela
+                        tableModel.setValueAt(aluno.getId(), editingRow, 0);
+                        tableModel.setValueAt(aluno.getNome(), editingRow, 1);
+                        tableModel.setValueAt(aluno.getCpf(), editingRow, 2);
+                        tableModel.setValueAt(aluno.getTelefone(), editingRow, 3);
+                        tableModel.setValueAt(aluno.getEmail(), editingRow, 4);
                         JOptionPane.showMessageDialog(window, "Aluno atualizado com sucesso!");
                         cancelEditing();
                     } else {
@@ -201,71 +182,84 @@ public class Tela_alunos {
             }
         });
 
-        // Ação editar (carrega campos para edição)
+        // Editar selecionado -> carregar no formulário
         editarBtn.addActionListener(e -> {
-            Usuario sel = resultadoList.getSelectedValue();
-            if (sel == null) {
+            int sel = tabela.getSelectedRow();
+            if (sel < 0) {
                 JOptionPane.showMessageDialog(window, "Selecione um aluno para editar.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            editingId = sel.getId();
-            editingIndex = resultadoList.getSelectedIndex();
-            nomeField.setText(nullToEmpty(sel.getNome()));
-            cpfField.setText(nullToEmpty(sel.getCpf()));
-            emailField.setText(nullToEmpty(sel.getEmail()));
-            telefoneField.setText(nullToEmpty(sel.getTelefone()));
+            editingRow = sel;
+            Object idObj = tableModel.getValueAt(sel, 0);
+            editingId = idObj == null ? null : ((idObj instanceof Number) ? ((Number) idObj).longValue() : Long.parseLong(idObj.toString()));
+            nomeField.setText(String.valueOf(tableModel.getValueAt(sel, 1)));
+            cpfField.setText(String.valueOf(tableModel.getValueAt(sel, 2)));
+            telefoneField.setText(String.valueOf(tableModel.getValueAt(sel, 3)));
+            emailField.setText(String.valueOf(tableModel.getValueAt(sel, 4)));
             cadastrarBtn.setText("Salvar");
         });
 
-        // Ação de busca (usa banco via UsuarioDAO.buscarPorNome)
+        // Buscar -> preencher tabela com resultados do banco
         buscarBtn.addActionListener(e -> {
             String nomeBusca = buscarField.getText().trim();
             try {
                 List<Usuario> resultados = usuarioDAO.buscarPorNome(nomeBusca);
-                listModel.clear();
+                tableModel.setRowCount(0);
                 for (Usuario u : resultados) {
-                    listModel.addElement(u);
+                    tableModel.addRow(new Object[]{u.getId(), u.getNome(), u.getCpf(), u.getTelefone(), u.getEmail()});
                 }
-                if (resultados.isEmpty()) {
-                    JOptionPane.showMessageDialog(window, "Nenhum aluno encontrado.");
-                }
+                if (resultados.isEmpty()) JOptionPane.showMessageDialog(window, "Nenhum aluno encontrado.");
             } catch (RuntimeException ex) {
                 JOptionPane.showMessageDialog(window, "Erro na busca: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // Ação deletar
+        // Deletar selecionado
         deletarBtn.addActionListener(e -> {
-            Usuario selecionado = resultadoList.getSelectedValue();
-            if (selecionado == null) {
+            int sel = tabela.getSelectedRow();
+            if (sel < 0) {
                 JOptionPane.showMessageDialog(window, "Selecione um aluno para deletar.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            int op = JOptionPane.showConfirmDialog(window,
-                    "Deseja realmente deletar o aluno:\n" + selecionado.getNome() + " (ID: " + selecionado.getId() + ")?",
-                    "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
+            Object idObj = tableModel.getValueAt(sel, 0);
+            Long id = idObj == null ? null : ((idObj instanceof Number) ? ((Number) idObj).longValue() : Long.parseLong(idObj.toString()));
+            int op = JOptionPane.showConfirmDialog(window, "Deseja realmente deletar o aluno (ID: " + id + ")?", "Confirmar exclusão", JOptionPane.YES_NO_OPTION);
             if (op != JOptionPane.YES_OPTION) return;
-
             try {
-                boolean ok = usuarioDAO.deletar(selecionado.getId());
+                boolean ok = usuarioDAO.deletar(id);
                 if (ok) {
-                    listModel.removeElement(selecionado);
-                    // se estava editando o mesmo registro, cancelar edição
-                    if (editingId != null && editingId.equals(selecionado.getId())) cancelEditing();
+                    tableModel.removeRow(sel);
+                    if (editingId != null && editingId.equals(id)) cancelEditing();
                     JOptionPane.showMessageDialog(window, "Aluno deletado com sucesso.");
                 } else {
-                    JOptionPane.showMessageDialog(window, "Não foi possível deletar (id não encontrado).", "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(window, "Não foi possível deletar.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (RuntimeException ex) {
                 JOptionPane.showMessageDialog(window, "Erro ao deletar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // resetar edição ao clicar fora da lista
-        resultadoList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                // nada por enquanto
+        // clique duplo na tabela mostra detalhes (opcional)
+        tabela.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int r = tabela.getSelectedRow();
+                    if (r >= 0) {
+                        String msg = "ID: " + tableModel.getValueAt(r, 0)
+                                + "\nNome: " + tableModel.getValueAt(r, 1)
+                                + "\nCPF: " + tableModel.getValueAt(r, 2)
+                                + "\nTelefone: " + tableModel.getValueAt(r, 3)
+                                + "\nEmail: " + tableModel.getValueAt(r, 4);
+                        JOptionPane.showMessageDialog(window, msg, "Detalhes do aluno", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
             }
+        });
+
+        // ação do botão voltar
+        voltarBtn.addActionListener(e -> {
+            new Tela_Inicial();
+            window.dispose();
         });
 
         window.setVisible(true);
@@ -273,7 +267,7 @@ public class Tela_alunos {
 
     private void cancelEditing() {
         editingId = null;
-        editingIndex = -1;
+        editingRow = -1;
         cadastrarBtn.setText("Cadastrar");
         clearForm();
     }
@@ -284,15 +278,7 @@ public class Tela_alunos {
         emailField.setText("");
         telefoneField.setText("");
     }
-
-    private String esc(String s) {
-        if (s == null) return "";
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    public static void main(String[] args) {
+        new Tela_alunos();
     }
-
-    private String nullToEmpty(String s) {
-        return s == null ? "" : s;
-    }
-
-    
 }

@@ -99,6 +99,7 @@ public class Tela_login {
                 if (rs.next()) {
                     JOptionPane.showMessageDialog(null, "Logado com sucesso!");
                     // Open a simple user window (UsuarioGUI was not found)
+                    
                     new Tela_Inicial();
                     window.dispose();
                 } else {
